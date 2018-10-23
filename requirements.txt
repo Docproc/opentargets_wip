@@ -1,1 +1,2 @@
 pandas
+python_jsonschema_objects
