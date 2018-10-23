@@ -1,6 +1,6 @@
 gene	variant	phenotype	tier
-g1	v1	diabetes	tier1
-g2	v2	hypertension	tier1
-g3	v3	asthma	tier2
-g4	v4	muscular dystrophy	tier2
-g5	v5	asthma	tier1
+ENSG000000001	rs00001	diabetes	tier1
+ENSG000000002	rs00002	hypertension	tier1
+ENSG000000003	rs00003	asthma	tier2
+ENSG000000004	rs00004	muscular dystrophy	tier2
+ENSG000000005	rs00005	asthma	tier1
