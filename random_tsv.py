@@ -15,6 +15,8 @@ parser.add_argument('-samples', type=int, help='Number of samples to output', re
 
 parser.add_argument('-columns', help="Columns to include, space separated. If not specifed, include all.", nargs='+')
 
+parser.add_argument('-header', help="If specified, print header row", action='store_true')
+
 parser.add_argument('-map_phenotypes',
                     help="Map phenotypes to EFO terms using OnToma. Value of this argument is the name of the phenotype column.",
                     action='store')
@@ -45,6 +47,11 @@ if args.map_phenotypes:
     ontoma_logger2 = logging.getLogger("ontoma.interface")
     ontoma_logger2.setLevel(logging.WARNING)
 
+# Header
+if args.header:
+    print("\t".join(columns))
+
+# Body
 for i in range(0, int(args.samples)):
 
     output_str = ""
