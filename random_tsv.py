@@ -49,20 +49,24 @@ if args.map_phenotypes:
 
 # Header
 if not args.no_header:
-    print("\t".join(columns))
+    header = "\t".join(columns)
+    if args.map_phenotypes:
+        header += "\tEFO"
+    print(header)
 
 # Body
 for i in range(0, int(args.samples)):
 
     output_str = ""
 
+    efo = ""
     for column in columns:
         entries = columns_cache[column]
         choice = random.choice(entries)
         output_str += choice + "\t"
         if args.map_phenotypes and column == args.map_phenotypes:
             efo = otmap.find_term(choice)
-            if efo:
-                output_str += efo + "\t"
+    if efo: # Always print as last column to match header order
+        output_str += efo + "\t"
 
     print(output_str)
