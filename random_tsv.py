@@ -13,7 +13,7 @@ parser.add_argument('-input', help="TSV input file", required=True, action='stor
 
 parser.add_argument('-samples', type=int, help='Number of samples to output', required=True)
 
-parser.add_argument('-columns', help="Columns to include, space separated", nargs='+', required=True)
+parser.add_argument('-columns', help="Columns to include, space separated. If not specifed, include all.", nargs='+')
 
 parser.add_argument('-map_phenotypes',
                     help="Map phenotypes to EFO terms using OnToma. Value of this argument is the name of the phenotype column.",
@@ -23,10 +23,15 @@ args = parser.parse_args()
 
 table = pd.read_table(args.input, dtype='unicode')
 
+if args.columns:
+    columns = args.columns
+else:
+    columns = table.columns
+
 # Cache columns as lists to avoid lots of expensive operations
 columns_cache = {}
 
-for column in args.columns:
+for column in columns:
     columns_cache[column] = table[column].unique().tolist()
 
 if args.map_phenotypes:
@@ -44,7 +49,7 @@ for i in range(0, int(args.samples)):
 
     output_str = ""
 
-    for column in args.columns:
+    for column in columns:
         entries = columns_cache[column]
         choice = random.choice(entries)
         output_str += choice + "\t"
