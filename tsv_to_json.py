@@ -4,43 +4,46 @@
 import csv
 import logging
 import sys
+import argparse
 
 import python_jsonschema_objects as pjs
 
-
-# TODO logging
-# TODO command-line args
-
-SCHEMA = "genetics.json"
-FILE = "test.tsv"
-LOG_LEVEL = "INFO"
-
 def main():
+
+    parser = argparse.ArgumentParser(description='Generate Open Targets JSON from an input TSV file')
+
+    parser.add_argument('--input', help="TSV input file", required=True, action='store')
+
+    parser.add_argument('--schema', help='Location of file containing Open Targets genetic_association JSON schema', required=True)
+
+    parser.add_argument("--log-level", help="Set the log level", action='store', default='WARNING')
+
+    args = parser.parse_args()
 
     logging.basicConfig()
     logger = logging.getLogger(__name__)
-    logger.setLevel(logging.getLevelName(LOG_LEVEL))
+    logger.setLevel(logging.getLevelName(args.log_level))
 
-    logger.info("Reading JSON schema from " + SCHEMA)
+    logger.info("Reading JSON schema from " + args.schema)
 
-    builder = pjs.ObjectBuilder(SCHEMA)  # TODO better way of referring to this
+    builder = pjs.ObjectBuilder(args.schema)  # TODO better way of referring to this
 
     logger.debug("Building classes from schema")
 
     classes = builder.build_classes()  # Takes a few seconds
 
-    logger.info("Reading TSV from " + FILE)
+    logger.info("Reading TSV from " + args.input)
 
     required_columns = ["gene", "EFO", "variant"]
 
     try:
-        with open(FILE) as tsv_file:
+        with open(args.input) as tsv_file:
 
             reader = csv.DictReader(tsv_file, delimiter='\t')
 
             for column in required_columns:
                 if column not in reader.fieldnames:
-                    logger.error("Required column %s does not exist in %s (columns in file are %s)" % (column, FILE, reader.fieldnames))
+                    logger.error("Required column %s does not exist in %s (columns in file are %s)" % (column, args.input, reader.fieldnames))
                     sys.exit(1)
 
             count = 0
@@ -50,7 +53,7 @@ def main():
                 count += 1
 
     except IOError as error:
-        logger.error("Problem reading " + FILE, error)
+        logger.error("Problem reading " + args.input, error)
 
     logger.info("Processed %d objects" % count)
 
