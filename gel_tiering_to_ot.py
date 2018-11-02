@@ -44,7 +44,6 @@ def main():
                 sys.exit(1)
 
         for row in reader:
-            # TODO filter out those without rsID
             my_instance = build_evidence_strings_object(consequence_map, phenotype_map,
                                                         row['genomic_feature_ensembl_id'], row['phenotype'],
                                                         row['db_snp_id'], row['consequence_type'], row['sample_id'],
@@ -63,9 +62,12 @@ def build_evidence_strings_object(consequence_map, phenotype_map, ensembl_id, ph
     :return:
     """
 
-    # TODO - ignore those with invalid rsID
-
     logger = logging.getLogger(__name__)
+
+    if db_snp_id == ".":
+        logger.info("Record with sample ID %s, Ensembl ID %s and phenotype %s has no rsID, ignoring" % (sample_id, ensembl_id, db_snp_id))
+        return
+
     logger.debug("Building container object")
 
     if not consequence_type in consequence_map:
