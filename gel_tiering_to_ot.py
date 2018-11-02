@@ -9,7 +9,8 @@ import sys
 
 SOURCE_ID = "eva"  # TODO change when using own source
 PHENOTYPE_MAPPING_FILE = "phenotypes_text_to_efo.txt"
-
+DATABASE_ID = "GEL_main_programme"
+DATABASE_VERSION = "v4_2018-07-31" # Change if version changes
 
 def main():
     parser = argparse.ArgumentParser(description='Generate Open Targets JSON from an input TSV file')
@@ -93,7 +94,7 @@ def build_evidence_strings_object(consequence_map, phenotype_map, ensembl_id, ph
             "sample_id": sample_id,
             "gene": ensembl_id,
             "phenotype": phenotype,
-            "variant": db_snp_id  # TODO more to make unique?
+            "variant": db_snp_id
         },
         "target": {
             "id": "http://identifiers.org/ensembl/" + ensembl_id,
@@ -114,8 +115,8 @@ def build_evidence_strings_object(consequence_map, phenotype_map, ensembl_id, ph
                 "date_asserted": "2018-10-22T23:00:00",
                 "provenance_type": {
                     "database": {
-                        "id": "abc",
-                        "version": "1"
+                        "id": DATABASE_ID,
+                        "version": DATABASE_VERSION
                     }
                 },
                 "evidence_codes": [
@@ -133,8 +134,8 @@ def build_evidence_strings_object(consequence_map, phenotype_map, ensembl_id, ph
                 },
                 "provenance_type": {
                     "database": {
-                        "id": "abc",
-                        "version": "1"
+                        "id": DATABASE_ID,
+                        "version": DATABASE_VERSION
                     }
                 },
                 "evidence_codes": [
