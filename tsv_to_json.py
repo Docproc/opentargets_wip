@@ -7,6 +7,7 @@ import json
 import logging
 import sys
 
+SOURCE_ID = "eva" # TODO change when using own source
 
 def main():
     parser = argparse.ArgumentParser(description='Generate Open Targets JSON from an input TSV file')
@@ -61,12 +62,13 @@ def build_evidence_strings_object(gene, efo, variant, score):
     logger.debug("Building container object")
 
     obj = {
-        "sourceID": "testing123",
+        "sourceID": SOURCE_ID,
         "access_level": "public",
         "validated_against_schema_version": "1.2.8",
         "unique_association_fields": {
-            "field1": "abc",
-            "field2": "def"
+            "gene": gene,
+            "phenotype": efo,
+            "variant": variant #TODO mode to make unique?
         },
         "target": {
             "id": "http://identifiers.org/ensembl/" + gene,
