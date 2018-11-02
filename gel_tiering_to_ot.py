@@ -8,6 +8,7 @@ import logging
 import sys
 
 SOURCE_ID = "eva"  # TODO change when using own source
+PHENOTYPE_MAPPING_FILE = "phenotypes_text_to_efo.txt"
 
 
 def main():
@@ -29,6 +30,9 @@ def main():
 
     count = 0
 
+    consequence_map = build_consequence_type_to_so_map()
+    phenotype_map = read_phenotype_to_efo_mapping(PHENOTYPE_MAPPING_FILE)
+
     with open(args.input) as tsv_file:
 
         reader = csv.DictReader(tsv_file, delimiter='\t')
@@ -41,26 +45,41 @@ def main():
 
         for row in reader:
             # TODO filter out those without rsID
-            my_instance = build_evidence_strings_object(row['genomic_feature_ensembl_id'], row['phenotype'],
+            my_instance = build_evidence_strings_object(consequence_map, phenotype_map,
+                                                        row['genomic_feature_ensembl_id'], row['phenotype'],
                                                         row['db_snp_id'], row['consequence_type'], row['sample_id'],
                                                         row['tier'])
-            print(json.dumps(my_instance))
-            count += 1
+            if my_instance:
+                print(json.dumps(my_instance))
+                count += 1
 
     logger.info("Processed %d objects" % count)
 
 
-def build_evidence_strings_object(ensembl_id, phenotype, db_snp_id, consequence_type, sample_id, tier):
+def build_evidence_strings_object(consequence_map, phenotype_map, ensembl_id, phenotype, db_snp_id, consequence_type,
+                                  sample_id, tier):
     """
     Build a Python object containing the correct structure to match the Open Targets genetics.json schema
     :return:
     """
 
+    # TODO - ignore those with invalid rsID
+
     logger = logging.getLogger(__name__)
     logger.debug("Building container object")
 
-    consequence_map = build_consequence_type_to_so_map()
+    if not consequence_type in consequence_map:
+        logger.error("Can't find consequence type mapping for %s, skipping this row" % consequence_type)
+        return
+
     functional_consequence = consequence_map[consequence_type]
+
+    phenotype = phenotype.strip()
+    if not phenotype in phenotype_map:
+        logger.error("Can't find phenotype mapping for %s, skipping this row" % phenotype)
+        return
+
+    ontology_term = phenotype_map[phenotype]
 
     score = 1  # TODO actually calculate score
 
@@ -80,7 +99,7 @@ def build_evidence_strings_object(ensembl_id, phenotype, db_snp_id, consequence_
             "activity": "http://identifiers.org/cttv.activity/loss_of_function"
         },
         "disease": {
-            "id": phenotype
+            "id": ontology_term
         },
         "type": "genetic_association",
         "variant": {
@@ -103,7 +122,7 @@ def build_evidence_strings_object(ensembl_id, phenotype, db_snp_id, consequence_
                 "functional_consequence": functional_consequence
             },
             "variant2disease": {
-                "unique_experiment_reference": sample_id,
+                "unique_experiment_reference": "STUDYID_" + sample_id, # Required by regexp in base.json
                 "is_associated": True,
                 "date_asserted": "2018-10-22T23:00:00",
                 "resource_score": {
@@ -127,7 +146,6 @@ def build_evidence_strings_object(ensembl_id, phenotype, db_snp_id, consequence_
 
 
 def build_consequence_type_to_so_map():
-
     consequence_to_so_map = {
         "3_prime_UTR_variant": "http://purl.obolibrary.org/obo/SO_0001624",
         "5_prime_UTR_variant": "http://purl.obolibrary.org/obo/SO_0001623",
@@ -168,6 +186,22 @@ def build_consequence_type_to_so_map():
 
     return consequence_to_so_map
 
+
+def read_phenotype_to_efo_mapping(filename):
+    phenotype_map = dict()
+
+    with open(filename, 'r') as mapping_file:
+        for line in mapping_file:
+            line = line.rstrip("\n")
+            if line.startswith("#") or line.startswith("query"):
+                continue
+            parts = line.split("\t")
+            phenotype = parts[0].strip()
+            ontology_term = parts[1].strip()
+            if phenotype and ontology_term:
+                phenotype_map[phenotype] = ontology_term
+
+    return phenotype_map
 
 if __name__ == '__main__':
     sys.exit(main())
