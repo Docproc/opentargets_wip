@@ -6,11 +6,14 @@ import csv
 import json
 import logging
 import sys
+import re
 
 SOURCE_ID = "eva"  # TODO change when using own source
 PHENOTYPE_MAPPING_FILE = "phenotypes_text_to_efo.txt"
 DATABASE_ID = "GEL_main_programme"
-DATABASE_VERSION = "v4_2018-07-31" # Change if version changes
+DATABASE_VERSION = "v4_2018-07-31"  # Change if version changes
+SNP_REGEXP = "rs[0-9]{1,}"  # TODO - support more SNP types
+
 
 def main():
     parser = argparse.ArgumentParser(description='Generate Open Targets JSON from an input TSV file')
@@ -65,20 +68,21 @@ def build_evidence_strings_object(consequence_map, phenotype_map, ensembl_id, ph
 
     logger = logging.getLogger(__name__)
 
-    if db_snp_id == ".":
-        logger.info("Record with sample ID %s, Ensembl ID %s and phenotype %s has no rsID, ignoring" % (sample_id, ensembl_id, db_snp_id))
+    if not re.match(SNP_REGEXP, db_snp_id):
+        logger.info("Record with sample ID %s, Ensembl ID %s and phenotype %s has variant %s which does not match "
+                    "the list of allowed types, ignoring" % (sample_id, ensembl_id, phenotype, db_snp_id))
         return
 
     logger.debug("Building container object")
 
-    if not consequence_type in consequence_map:
+    if consequence_type not in consequence_map:
         logger.error("Can't find consequence type mapping for %s, skipping this row" % consequence_type)
         return
 
     functional_consequence = consequence_map[consequence_type]
 
     phenotype = phenotype.strip()
-    if not phenotype in phenotype_map:
+    if phenotype not in phenotype_map:
         logger.error("Can't find phenotype mapping for %s, skipping this row" % phenotype)
         return
 
@@ -125,7 +129,7 @@ def build_evidence_strings_object(consequence_map, phenotype_map, ensembl_id, ph
                 "functional_consequence": functional_consequence
             },
             "variant2disease": {
-                "unique_experiment_reference": "STUDYID_" + sample_id, # Required by regexp in base.json
+                "unique_experiment_reference": "STUDYID_" + sample_id,  # Required by regexp in base.json
                 "is_associated": True,
                 "date_asserted": "2018-10-22T23:00:00",
                 "resource_score": {
@@ -205,6 +209,7 @@ def read_phenotype_to_efo_mapping(filename):
                 phenotype_map[phenotype] = ontology_term
 
     return phenotype_map
+
 
 if __name__ == '__main__':
     sys.exit(main())
